@@ -1,0 +1,21 @@
+app:
+  replicaCount: 1
+  image:
+    dgr: 
+      repo: null
+      tag: null
+    composer: 
+      repo: null
+      tag: null
+  file:
+    sh: "https://tpisoftwarefile.file.core.windows.net/file/GCP/sh.zip?sp=r&st=2025-06-06T02:08:53Z&se=2100-06-07T02:08:00Z&spr=https&sv=2024-11-04&sig=HPwj%2BoljL4CrTxxIOrGaAu5%2BpT375gHR%2FLvOVsp715A%3D&sr=f" 
+    workbench: "https://tpisoftwarefile.file.core.windows.net/file/GCP/Workbench.zip?sp=r&st=2025-06-04T08:20:29Z&se=2100-06-05T08:20:00Z&spr=https&sv=2024-11-04&sig=0mNtVKN%2BeIsMGQR6U6D%2BmV%2FVp8QOBFVEsuZiCn7EObQ%3D&sr=f"
+  service:
+    type: LoadBalancer # NodePort
+    port: 80
+  pvc:
+    accessModes: "ReadWriteOnce"
+    storage: 100Mi
+  port:
+    dgr: 8442
+    composer: 8440

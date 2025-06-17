@@ -1,0 +1,179 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.app.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-app
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-app
+    spec:
+      initContainers:
+        - name: init-environment
+          image: alpine:latest
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "Hello world"
+              if [ ! -d /opt/dgr-v4/db ]
+              then
+                mkdir -p /opt/dgr-v4/db
+              fi
+              chown 1000:1000 /opt/dgr-v4/db
+          volumeMounts:
+            - name: dgr-storage
+              mountPath: /opt/dgr-v4/db
+              subPath: db
+      containers:
+        - name: {{ .Release.Name }}-dgr
+          ports:
+          - containerPort: {{ .Values.app.port.dgr }}
+          image: {{ .Values.app.image.dgr.repo }}:{{ .Values.app.image.dgr.tag }}
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              # 判斷資料庫檔案是否存在，決定 spring.sql.init.mode
+              if [ -f /opt/dgr-v4/db/dgrdb.mv.db ]; then
+                spring_sql_init_mode="never"
+              else
+                spring_sql_init_mode="always"
+              fi
+
+              # 執行 Java，注意每個 -D 參數都要正確
+              # 啟用容器支援與 JVM 相關參數
+              exec java -cp app-cp/* \
+                -XX:+UseContainerSupport \
+                -XX:MaxDirectMemorySize=128m \
+                -XX:MaxMetaspaceSize=256m \
+                -Xss512k \
+                -Xms2048m \
+                -Dserver.undertow.direct-buffers=true \
+                -Dloader.path=lib/,libsext/ \
+                -Djava.security.debug=properties \
+                -Djava.security.properties=./config/dgr.java.security \
+                -Dspring.config.location=file:./config/ \
+                -DdigiRunner.token.key-store.path=./keys \
+                -Djasypt.encryptor.privateKeyLocation=file:./keys/enc.pem \
+                -Dfile.encoding=UTF-8 \
+                -Dlogging.config=file:./config/logback.xml \
+                -Dspring.profiles.active=local \
+                -Dserver.port={{ .Values.app.port.dgr }} \
+                -Ddigi.instance.id=dgr \
+                -Dspring.sql.init.mode=$spring_sql_init_mode \
+                -Des.apilog.allow.write.elastic=false \
+                -Dserver.ssl.enabled=false \
+                -Dspring.datasource.url='jdbc:h2:/opt/dgr-v4/db/dgrdb;NON_KEYWORDS=VALUE;Mode=MySQL' \
+                org.springframework.boot.loader.launch.PropertiesLauncher
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "512Mi"
+            limits:
+              cpu: "2000m"
+              memory: "4048Mi"
+          volumeMounts:
+            - name: dgr-storage
+              mountPath: /opt/dgr-v4/db
+              subPath: db
+          livenessProbe:
+            httpGet:
+              path: /liveness  
+              port: {{ .Values.app.port.dgr }}      
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 60
+            timeoutSeconds: 10
+            failureThreshold: 10
+          readinessProbe:
+            httpGet:
+              path: /readiness 
+              port: {{ .Values.app.port.dgr }}      
+              scheme: HTTP
+            initialDelaySeconds: 0
+            periodSeconds: 60
+            timeoutSeconds: 10
+            successThreshold: 1
+            failureThreshold: 10
+          startupProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  # 檢查 HTTP endpoint 是否正常
+                  if ! curl -sf http://127.0.0.1:{{ .Values.app.port.dgr }}/liveness; then
+                    echo "HTTP 檢查失敗"
+                    exit 1
+                  fi
+
+                  # 檢查 initEnv.txt 檔案是否存在，若存在才執行下載與執行
+                  if [ ! -f /opt/dgr-v4/db/initEnv.txt ]; then \
+                    # 使用 curl 下載檔案，-k 跳過憑證檢查，-L 跟隨轉址，-o 指定輸出檔案
+                    curl -k -L "{{ .Values.app.file.sh }}" -o sh.zip && \
+                    unzip sh.zip -d . && \
+                    chmod +x __call_update_ip_api.sh && \
+                    sh __call_update_ip_api.sh "http://localhost:{{ .Values.app.port.dgr }}/dgrv4/tptoken/oauth/token" "http://localhost:{{ .Values.app.port.dgr }}/dgrv4/17/DPB9903" "http://localhost:{{ .Values.app.port.dgr }}/dgrv4/11/DPB0062" && \
+                    echo "OK" > /opt/dgr-v4/db/initEnv.txt ;
+                  fi
+            initialDelaySeconds: 120
+            periodSeconds: 60
+            timeoutSeconds: 10
+            failureThreshold: 10
+        - name: {{ .Release.Name }}-composer
+          image: {{ .Values.app.image.composer.repo }}:{{ .Values.app.image.composer.tag }}
+          args:
+            - "--node-options=--max-old-space-size=800"  
+          env:
+            - name: TZ
+              value: Asia/Taipei
+            - name: DIGIRUNNER_SCHEMES_MAIN
+              value: http
+            - name: DIGIRUNNER_HOST_MAIN
+              value: 127.0.0.1
+            - name: DIGIRUNNER_PORT_MAIN
+              value: "{{ .Values.app.port.dgr }}"
+            - name: HTTPS_ENABLED_MAIN
+              value: "false"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "2048Mi"
+          livenessProbe:
+            httpGet:
+              path: /editor/version 
+              port: {{ .Values.app.port.composer }}      
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 60
+            timeoutSeconds: 10
+            failureThreshold: 10
+          readinessProbe:
+            httpGet:
+              path: /editor/version 
+              port: {{ .Values.app.port.composer }}      
+              scheme: HTTP
+            initialDelaySeconds: 0
+            periodSeconds: 60
+            timeoutSeconds: 10
+            successThreshold: 1
+            failureThreshold: 10
+          startupProbe:
+            httpGet:
+              path: /editor/version  
+              port: {{ .Values.app.port.composer }}      
+              scheme: HTTP
+            initialDelaySeconds: 120
+            periodSeconds: 60
+            timeoutSeconds: 10
+            failureThreshold: 10
+      volumes:
+        - name: dgr-storage
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-pvc
