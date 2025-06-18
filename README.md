@@ -163,7 +163,7 @@ helm template $APP_INSTANCE_NAME chart/digiRunner \
   --set "app.image.dgr.tag=$IMAGE_TAG" \
   --set "app.image.composer.repo=$IMAGE_COMPOSER_REPO" \
   --set "app.image.composer.tag=$IMAGE_TAG" \
-  --set "app.persistentVolumeClaim.storageClass=$DGR_STORAGE_CLASS" \  
+  --set "app.persistentVolumeClaim.storageClass=$DGR_STORAGE_CLASS" \
   --set "app.persistentVolumeClaim.size=$DGR_PERSISTENT_DISK_SIZE" \
   > ${APP_INSTANCE_NAME}_manifest.yaml
 ```
@@ -211,11 +211,6 @@ MASTER_POD=$(kubectl -n$NAMESPACE get pod -oname | sed -n /\\/$APP_INSTANCE_NAME
 
 echo http://$EXTERNAL_IP/dgrv4/login
 ```
-
-EXTERNAL_IP=$(kubectl get ingress -n $NAMESPACE -o jsonpath='{.items[*].status.loadBalancer.ingress[0].ip}')
-
-EXTERNAL_IP=$(kubectl get ingress -n $NAMESPACE -l "app.kubernetes.io/name=$APP_INSTANCE_NAME" \
-  -o jsonpath='{.items[*].status.loadBalancer.ingress[0].ip}')
 
 When you access your cluster using HTTPS, you might have to accept a temporary
 certificate.

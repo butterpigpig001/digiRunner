@@ -80,7 +80,9 @@ spec:
           volumeMounts:
             - name: dgr-storage
               mountPath: /opt/dgr-v4/db
-              subPath: db
+              subPath: db            
+            - name: temp-volume
+              mountPath: /tmp
           livenessProbe:
             httpGet:
               path: /liveness  
@@ -181,3 +183,7 @@ spec:
         - name: dgr-storage
           persistentVolumeClaim:
             claimName: {{ .Release.Name }}-pvc
+        - name: temp-volume
+          emptyDir:
+            sizeLimit: 1Gi  # 設定 1GB 大小限制
+
