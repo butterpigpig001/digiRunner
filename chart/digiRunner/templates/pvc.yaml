@@ -4,8 +4,8 @@ metadata:
   name: {{ .Release.Name }}-pvc
 spec:
   accessModes:
-    - {{ .Values.app.pvc.accessModes }}
+    - ReadWriteOnce
   resources:
     requests:
-      storage: {{ .Values.app.pvc.storage }}
-  storageClassName: standard-rwo
+      storage: {{ .Values.app.persistentVolumeClaim.size }}
+  storageClassName: {{ .Values.app.persistentVolumeClaim.storageClass }}

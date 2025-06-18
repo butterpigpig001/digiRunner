@@ -13,9 +13,9 @@ app:
   service:
     type: LoadBalancer # NodePort
     port: 80
-  pvc:
-    accessModes: "ReadWriteOnce"
-    storage: 100Mi
+  persistentVolumeClaim:
+    storageClass: null
+    size: null
   port:
     dgr: 8442
     composer: 8440

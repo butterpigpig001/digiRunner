@@ -62,12 +62,13 @@ Create a cluster from the command-line. If you already have a cluster that you
 want to use, skip this step.
 
 ```shell
-export CLUSTER=jenkins-cluster
+export CLUSTER=digirunner-cluster
 export ZONE=us-west1-a
+export MACHINE=n2d-standard-2
 ```
 
 ```shell
-gcloud container clusters create "$CLUSTER" --zone "$ZONE"
+gcloud container clusters create "$CLUSTER" --zone "$ZONE" --num-nodes=1 --machine-type="$MACHINE"
 ```
 
 #### Configure `kubectl` to connect to the cluster
@@ -81,7 +82,7 @@ gcloud container clusters get-credentials "$CLUSTER" --zone "$ZONE"
 Clone this repo and its associated tools repo:
 
 ```shell
-git clone --recursive https://github.com/GoogleCloudPlatform/click-to-deploy.git
+git clone --recursive https://github.com/butterpigpig001/digiRunner.git
 ```
 
 #### Install the Application resource definition
@@ -105,10 +106,10 @@ community. The source code can be found on
 
 ### Install the app
 
-Navigate to the `jenkins` directory:
+Navigate to the `digiRunner` directory:
 
 ```shell
-cd click-to-deploy/k8s/jenkins
+cd digiRunner
 ```
 
 #### Configure the app with environment variables
@@ -118,7 +119,7 @@ Choose an instance name and
 for the app. In most cases, you can use the `default` namespace.
 
 ```shell
-export APP_INSTANCE_NAME=jenkins-1
+export APP_INSTANCE_NAME=digirunner-1
 export NAMESPACE=default
 ```
 
@@ -128,19 +129,19 @@ For the persistent disk provisioning of the Jenkins application StatefulSets, yo
    * ```kubectl get storageclass```
    * Or check how to create a new StorageClass in [Kubernetes Documentation](https://kubernetes.io/docs/concepts/storage/storage-classes/#the-storageclass-resource)
 
- * Set the persistent disk's size. The default disk size is "8Gi".
+ * Set the persistent disk's size. The default disk size is "1Gi".
 
 ```shell
-export JENKINS_STORAGE_CLASS="standard" # provide your StorageClass name if not "standard"
-export JENKINS_PERSISTENT_DISK_SIZE="8Gi"
+export DGR_STORAGE_CLASS="standard-rwo" # provide your StorageClass name if not "standard"
+export DGR_PERSISTENT_DISK_SIZE="1Gi"
 ```
 
 Configure the container images:
 
 ```shell
-export IMAGE_JENKINS_TAG=2.190
-export IMAGE_JENKINS_REPO="marketplace.gcr.io/google/jenkins"
-export IMAGE_JENKINS="${IMAGE_JENKINS_REPO}:${IMAGE_JENKINS_TAG}"
+export IMAGE_TAG=4.5.10-2
+export IMAGE_DGR_REPO="gcr.io/tpisoftware-digirunner-public/digirunner/digirunner"
+export IMAGE_COMPOSER_REPO="gcr.io/tpisoftware-digirunner-public/digirunner/composer"
 ```
 
 The image above is referenced by
@@ -148,36 +149,7 @@ The image above is referenced by
 that you pin each image to an immutable
 [content digest](https://docs.docker.com/registry/spec/api/#content-digests).
 This ensures that the installed app always uses the same images, until
-you are ready to upgrade. To get the digest for the image, use the following
-script:
-
-```shell
-export IMAGE_JENKINS=$(docker pull $IMAGE_JENKINS | awk -F: "/^Digest:/ {print gensub(\":.*$\", \"\", 1, \"$IMAGE_JENKINS\")\"@sha256:\"\$3}")
-```
-
-#### Create a TLS certificate for Jenkins
-
-> Note: You can skip this step if you have not set up external access.
-
-1.  If you already have a certificate that you want to use, copy your
-    certificate and key pair to the `/tmp/tls.crt` and `/tmp/tls.key` files,
-    respectively, and then skip to the next step.
-
-    To create a new certificate, run the following command:
-
-    ```shell
-    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-        -keyout /tmp/tls.key \
-        -out /tmp/tls.crt \
-        -subj "/CN=jenkins/O=jenkins"
-    ```
-
-1.  Set the `TLS_CERTIFICATE_KEY` and `TLS_CERTIFICATE_CRT` variables:
-
-    ```shell
-    export TLS_CERTIFICATE_KEY="$(cat /tmp/tls.key | base64)"
-    export TLS_CERTIFICATE_CRT="$(cat /tmp/tls.crt | base64)"
-    ```
+you are ready to upgrade.
 
 #### Expand the manifest template
 
@@ -185,14 +157,14 @@ Use `helm template` to expand the template. We recommend that you save the
 expanded manifest file for future updates to your app.
 
 ```shell
-helm template $APP_INSTANCE_NAME chart/jenkins \
+helm template $APP_INSTANCE_NAME chart/digiRunner \
   --namespace $NAMESPACE \
-  --set "jenkins.image.repo=$IMAGE_JENKINS_REPO" \
-  --set "jenkins.image.tag=$IMAGE_JENKINS_TAG" \
-  --set "jenkins.persistence.storageClass=$JENKINS_STORAGE_CLASS" \
-  --set "jenkins.persistence.size=$JENKINS_PERSISTENT_DISK_SIZE" \
-  --set "tls.base64EncodedPrivateKey=$TLS_CERTIFICATE_KEY" \
-  --set "tls.base64EncodedCertificate=$TLS_CERTIFICATE_CRT" \
+  --set "app.image.dgr.repo=$IMAGE_DGR_REPO" \
+  --set "app.image.dgr.tag=$IMAGE_TAG" \
+  --set "app.image.composer.repo=$IMAGE_COMPOSER_REPO" \
+  --set "app.image.composer.tag=$IMAGE_TAG" \
+  --set "app.persistentVolumeClaim.storageClass=$DGR_STORAGE_CLASS" \  
+  --set "app.persistentVolumeClaim.size=$DGR_PERSISTENT_DISK_SIZE" \
   > ${APP_INSTANCE_NAME}_manifest.yaml
 ```
 
@@ -208,10 +180,8 @@ installation creates:
     with the same name, the new installation will use the same PersistentVolume. As
     a result, there will be no app initialization, and the old configuration will
     be used.
--   A StatefulSet.
--   Two Services, which expose Jenkins Master UI (8080) and Agents Connector
-    (50000) ports to the cluster.
--   An Ingress, which exposes the Jenkins Master UI externally.
+-   An Services, which expose digiRunner UI (80)
+-   An Ingress, which exposes the digiRunner UI externally.
 
 ```shell
 kubectl apply -f "${APP_INSTANCE_NAME}_manifest.yaml" --namespace "${NAMESPACE}"
@@ -239,17 +209,16 @@ EXTERNAL_IP=$(kubectl -n$NAMESPACE get ingress -l "app.kubernetes.io/name=$APP_I
   -ojsonpath="{.items[0].status.loadBalancer.ingress[0].ip}")
 MASTER_POD=$(kubectl -n$NAMESPACE get pod -oname | sed -n /\\/$APP_INSTANCE_NAME-jenkins/s.pods\\?/..p)
 
-echo https://$EXTERNAL_IP/
+echo http://$EXTERNAL_IP/dgrv4/login
 ```
+
+EXTERNAL_IP=$(kubectl get ingress -n $NAMESPACE -o jsonpath='{.items[*].status.loadBalancer.ingress[0].ip}')
+
+EXTERNAL_IP=$(kubectl get ingress -n $NAMESPACE -l "app.kubernetes.io/name=$APP_INSTANCE_NAME" \
+  -o jsonpath='{.items[*].status.loadBalancer.ingress[0].ip}')
 
 When you access your cluster using HTTPS, you might have to accept a temporary
 certificate.
-
-To get your Jenkins password, run the following command:
-
-```shell
-kubectl -n $NAMESPACE exec $MASTER_POD cat /var/jenkins_home/secrets/initialAdminPassword
-```
 
 ## Follow the on-screen steps
 
@@ -259,113 +228,14 @@ To set up Jenkins and customize your installation, follow these on-screen steps:
 *   Create the first admin user
 *   Optionally, configure the Jenkins URL; you can also change the URL later
 
-# Deploying Jenkins agents using Kubernetes
-
-For information about using Jenkins with Kubernetes, refer to [Integrate Jenkins and Kubernetes](docs/CONFIGURE_K8S_PLUGIN_IN_JENKINS.md)
-
-# App metrics
-
-## Prometheus metrics
-
-The app is configured to expose its metrics through the
-[Jenkins Monitoring plugin](https://wiki.jenkins.io/display/JENKINS/Monitoring)
-in the
-[Prometheus format](https://github.com/prometheus/docs/blob/master/content/docs/instrumenting/exposition_formats.md).
-
-You can access the metrics at at `[APP_BASE_URL]:8080/monitoring?format=prometheus`, where
-`[APP_BASE_URL]` is the base URL address of the app.
-
-### Configuring Prometheus to collect metrics
-
-Prometheus can be configured to automatically collect the app's metrics.
-Follow the steps in
-[Configuring Prometheus](https://prometheus.io/docs/introduction/first_steps/#configuring-prometheus).
-
-You configure the metrics in the
-[`scrape_configs` section](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#scrape_config).
-Note that you need to configure authentication to get access to Jenkins metrics.
-
-# Scaling
-
-This installation is a single-master instance of Jenkins. If you need more
-resources, or if you need to distribute your Jenkins workloads, you must create
-additional instances of Jenkins agents. For information on setting up
-distributed Jenkins installations, visit the
-[Jenkins wiki](https://wiki.jenkins.io/display/JENKINS/Distributed+builds).
-
-# Back up and restore
-
-## Backing up Jenkins
-
-You can manually back up your Jenkins PersistentVolume, or install the Backup
-plugin.
-
-To install the Backup plugin, open the Jenkins plugin manager. To get the URL
-for the plugin manager, run the following command:
-
-```shell
-echo https://$EXTERNAL_IP/pluginManager/available
-```
-
-Select the Backup plugin. In the plugin, set **Backup directory** to
-"/var/jenkins_home". Configure the plugin to use the `.tar.gz` format. Set any
-other backup settings at the following URL:
-
-```shell
-echo https://$EXTERNAL_IP/backup/backupsettings
-```
-
-Create your backup from the following URL:
-
-```shell
-echo https://$EXTERNAL_IP/backup/launchBackup
-```
-
-Save the backup file to your workstation:
-
-```shell
-kubectl -n$NAMESPACE cp $MASTER_POD:/var/jenkins_home/<YOUR-BACKUP-FILE-NAME.tar.gz> /tmp
-```
-
-## Restoring your data
-
-If you backed up your Jenkins PersistentVolume, copy the data back to the
-PersistentVolume.
-
-If you used the Backup plugin, copy the backup file to your Jenkins master
-container using the following command:
-
-```shell
-kubectl -n $NAMESPACE cp /tmp/[BACKUP_FILE_NAME].tar.gz $MASTER_POD:/var/jenkins_home/
-```
-
-Then, use the Jenkins Backup plugin to restore your data from the following
-URL:
-
-```shell
-echo https://$EXTERNAL_IP/backup/launchrestore
-```
-
-# Updating
-
-To update your Jenkins installation, delete your Jenkins Pod, and install a new
-version from Google Cloud Marketplace. Back up your data, and then run the following
-command:
-
-```shell
-# back up your data before running
-
-kubectl -n $NAMESPACE delete pod $MASTER_POD
-```
-
 # Logging and monitoring
 
-This Jenkins installation logs to
+This digiRunner installation logs to
 [Stackdriver](https://cloud.google.com/monitoring/).
 
-# Deleting your Jenkins installation
+# Deleting your digiRunner installation
 
-> Warning: The following command deletes Jenkins from your cluster. If you need
+> Warning: The following command deletes digiRunner from your cluster. If you need
 > your data, back it up first.
 
 ```shell
