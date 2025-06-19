@@ -72,17 +72,17 @@ spec:
             requests:
               cpu: 100m
               memory: 512Mi
-              ephemeral-storage: 500Mi
+              ephemeral-storage: 200Mi
             limits:
               cpu: 2000m
               memory: 4048Mi
-              ephemeral-storage: 1Gi
+              ephemeral-storage: 500Mi
           volumeMounts:
             - name: dgr-storage
               mountPath: /opt/dgr-v4/db
-              subPath: db            
-            - name: temp-volume
-              mountPath: /tmp
+              subPath: db
+            - mountPath: /data
+              name: data-volume
           livenessProbe:
             httpGet:
               path: /liveness  
@@ -146,11 +146,9 @@ spec:
             requests:
               cpu: 100m
               memory: 512Mi
-              ephemeral-storage: 500Mi
             limits:
               cpu: 1000m
               memory: 2048Mi
-              ephemeral-storage: 1Gi
           livenessProbe:
             httpGet:
               path: /editor/version 
@@ -183,7 +181,5 @@ spec:
         - name: dgr-storage
           persistentVolumeClaim:
             claimName: {{ .Release.Name }}-pvc
-        - name: temp-volume
-          emptyDir:
-            sizeLimit: 1Gi  # 設定 1GB 大小限制
-
+        - name: data-volume
+          emptyDir: {}
