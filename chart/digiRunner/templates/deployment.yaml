@@ -81,10 +81,8 @@ spec:
             - name: dgr-storage
               mountPath: /opt/dgr-v4/db
               subPath: db
-            - mountPath: /opt/dgr-v4/logs
-              name: data-volume
-            - mountPath: /tmp
-              name: data-volume
+            - name: cache-volume
+              mountPath: /opt/dgr-v4/apilogs
           livenessProbe:
             httpGet:
               path: /liveness  
@@ -183,6 +181,6 @@ spec:
         - name: dgr-storage
           persistentVolumeClaim:
             claimName: {{ .Release.Name }}-pvc
-        - name: data-volume
+        - name: cache-volume
           emptyDir: 
             sizeLimit: "500Mi"
