@@ -72,11 +72,11 @@ spec:
             requests:
               cpu: 100m
               memory: 512Mi
-              ephemeral-storage: 200Mi
+              ephemeral-storage: 500Mi
             limits:
               cpu: 2000m
               memory: 4048Mi
-              ephemeral-storage: 500Mi
+              ephemeral-storage: 1Gi
           volumeMounts:
             - name: dgr-storage
               mountPath: /opt/dgr-v4/db
@@ -182,5 +182,6 @@ spec:
           persistentVolumeClaim:
             claimName: {{ .Release.Name }}-pvc
         - name: cache-volume
-          emptyDir: 
-            sizeLimit: 500Mi
+          emptyDir:
+            medium: Memory
+            sizeLimit: 1Gi
