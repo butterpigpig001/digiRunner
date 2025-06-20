@@ -34,7 +34,7 @@ Kubernetes Engine cluster using Google Cloud Marketplace, follow the
 Click on Ingress URL.
 ![001](resources/001.png)
 
-digiRunner installation complete, please wait another 10~15 minutes, then press the "X.X.X.X/dgrv4/login URL".
+digiRunner installation complete, please wait another 15~20 minutes, then press the "X.X.X.X/dgrv4/login URL".
 ![002](resources/002.png)
 
 Login information is as follows.
@@ -227,6 +227,8 @@ To sign in to digiRunner, get the digiRunner HTTP address.
 EXTERNAL_IP=$(kubectl -n$NAMESPACE get ingress -l "app.kubernetes.io/name=$APP_INSTANCE_NAME" \
   -ojsonpath="{.items[0].status.loadBalancer.ingress[0].ip}")
 
+MASTER_POD=$(kubectl -n$NAMESPACE get pod -oname | sed -n /\\/$APP_INSTANCE_NAME/s.pods\\?/..p)
+
 echo http://$EXTERNAL_IP/dgrv4/login
 ```
 
@@ -269,7 +271,7 @@ echo http://$EXTERNAL_IP/dgrv4/login
 7.Click "Advanced host and path rule (URL redirect, URL rewrite)", then click Update.
 ![015](resources/015.png)
 
-8.Use a browser to connect to the DNS Hostnames of the TLS certificate.
+8.Please wait another 15 to 20 minutes, then use a browser to connect to the DNS Hostnames of the TLS certificate.
 Login information is as follows.
 ``` textile
 Username：manager
