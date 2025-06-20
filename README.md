@@ -25,9 +25,25 @@ you must configure Google Cloud firewall rules.
 
 ## Quick install with Google Cloud Marketplace
 
-Get up and running with a few clicks! To install this Jenkins app to a Google
+Get up and running with a few clicks! To install this digiRunner app to a Google
 Kubernetes Engine cluster using Google Cloud Marketplace, follow the
 [on-screen instructions](https://console.cloud.google.com/marketplace/details/google/digirunner-standalone).
+
+### Log in to digiRunner
+
+Click on Ingress URL.
+![001](resources/001.png)
+
+Press the X.X.X.X/dgrv4/login URL.
+![002](resources/002.png)
+
+Login information is as follows.
+Username：manager
+User password：manager123
+![003](resources/003.png)
+
+After logging in, the system screen is as follows.
+![004](resources/004.png)
 
 ## Command-line instructions
 
@@ -123,7 +139,7 @@ export APP_INSTANCE_NAME=digirunner-1
 export NAMESPACE=default
 ```
 
-For the persistent disk provisioning of the Jenkins application StatefulSets, you will need to:
+For the persistent disk provisioning of the digiRunner application StatefulSets, you will need to:
 
  * Set the StorageClass name. Check your available options using the command below:
    * ```kubectl get storageclass```
@@ -199,39 +215,68 @@ To view the app, open the URL in your browser.
 
 # Using the app
 
-## Sign in to your new Jenkins instance
+## Sign in to your new digiRunner instance
 
-To sign in to Jenkins, get the Jenkins HTTP/HTTPS address and the Jenkins master
-Pod name:
+To sign in to digiRunner, get the digiRunner HTTP address.
 
 ```shell
 EXTERNAL_IP=$(kubectl -n$NAMESPACE get ingress -l "app.kubernetes.io/name=$APP_INSTANCE_NAME" \
   -ojsonpath="{.items[0].status.loadBalancer.ingress[0].ip}")
-MASTER_POD=$(kubectl -n$NAMESPACE get pod -oname | sed -n /\\/$APP_INSTANCE_NAME-jenkins/s.pods\\?/..p)
 
 echo http://$EXTERNAL_IP/dgrv4/login
 ```
 
-When you access your cluster using HTTPS, you might have to accept a temporary
-certificate.
+# Create a TLS certificate for digiRunner
 
-## Follow the on-screen steps
+## Set a static IP address
 
-To set up Jenkins and customize your installation, follow these on-screen steps:
+1.Enter VPC networks.
+![005](resources/005.png) 
 
-*   Install plugins
-*   Create the first admin user
-*   Optionally, configure the Jenkins URL; you can also change the URL later
+2.IP addresses -> Reserve external static IP address.
+![006](resources/006.png)
 
-# Logging and monitoring
+3.Name set to dgrstaticip and Type set to Global, then click Reserve.
+![007](resources/007.png)
 
-This digiRunner installation logs to
-[Stackdriver](https://cloud.google.com/monitoring/).
+4.The static IP address for dgrstaticip has been successfully created
+![008](resources/008.png)
+
+## Set up Load balancing
+
+1.Enter Load balancing.
+![009](resources/009.png)
+
+2.Search for digirunner-standalone, then click Edit.
+![010](resources/010.png)
+
+3.Delete "Port: 80 item".
+![011](resources/011.png)
+
+4.Click "Add Frontend IP and port".
+![012](resources/012.png)
+
+5.Set Protocol to HTTPS, IP Address to dgrstaticip, create a Certificate, and check "Enable HTTP to HTTPS redirect".
+![013](resources/013.png)
+
+6.Click "Host and path rules".
+![014](resources/014.png)
+
+7.Click "Advanced host and path rule (URL redirect, URL rewrite)", then click Update.
+![015](resources/015.png)
+
+8.Use a browser to connect to the DNS Hostnames of the TLS certificate.
+Login information is as follows.
+Username：manager
+User password：manager123
+![016](resources/016.png)
+
+9.After logging in, the system screen is as follows.
+![017](resources/017.png)
 
 # Deleting your digiRunner installation
 
-> Warning: The following command deletes digiRunner from your cluster. If you need
-> your data, back it up first.
+> Warning: The following command deletes digiRunner from your cluster.
 
 ```shell
 kubectl delete -f ${APP_INSTANCE_NAME}_manifest.yaml --namespace $NAMESPACE
