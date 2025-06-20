@@ -7,7 +7,7 @@ For more information on digiRunner, visit the
 
 ## About Google Click to Deploy
 
-Popular open source software stacks on Kubernetes, packaged by Google.
+digiRunner software stacks on Kubernetes, packaged by Google.
 
 ## Architecture
 
@@ -34,12 +34,16 @@ Kubernetes Engine cluster using Google Cloud Marketplace, follow the
 Click on Ingress URL.
 ![001](resources/001.png)
 
-Press the X.X.X.X/dgrv4/login URL.
+digiRunner installation complete, please wait another 10~15 minutes, then press the "X.X.X.X/dgrv4/login URL".
 ![002](resources/002.png)
 
 Login information is as follows.
+
+``` textile
 Username：manager
 User password：manager123
+```
+
 ![003](resources/003.png)
 
 After logging in, the system screen is as follows.
@@ -139,7 +143,7 @@ export APP_INSTANCE_NAME=digirunner-1
 export NAMESPACE=default
 ```
 
-For the persistent disk provisioning of the digiRunner application StatefulSets, you will need to:
+For the persistent disk provisioning of the digiRunner application , you will need to:
 
  * Set the StorageClass name. Check your available options using the command below:
    * ```kubectl get storageclass```
@@ -196,7 +200,7 @@ installation creates:
     with the same name, the new installation will use the same PersistentVolume. As
     a result, there will be no app initialization, and the old configuration will
     be used.
--   An Services, which expose digiRunner UI (80)
+-   An Services, which expose digiRunner UI
 -   An Ingress, which exposes the digiRunner UI externally.
 
 ```shell
@@ -226,7 +230,7 @@ EXTERNAL_IP=$(kubectl -n$NAMESPACE get ingress -l "app.kubernetes.io/name=$APP_I
 echo http://$EXTERNAL_IP/dgrv4/login
 ```
 
-# Create a TLS certificate for digiRunner
+# Configure the TLS certificate for digiRunner
 
 ## Set a static IP address
 
@@ -267,8 +271,10 @@ echo http://$EXTERNAL_IP/dgrv4/login
 
 8.Use a browser to connect to the DNS Hostnames of the TLS certificate.
 Login information is as follows.
+``` textile
 Username：manager
 User password：manager123
+```
 ![016](resources/016.png)
 
 9.After logging in, the system screen is as follows.
