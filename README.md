@@ -221,7 +221,7 @@ To view the app, open the URL in your browser.
 
 ## Sign in to your new digiRunner instance
 
-To sign in to digiRunner, get the digiRunner HTTP address.
+digiRunner installation is complete. Please wait 15-20 minutes, then sign in to digiRunner and retrieve the HTTP address.
 
 ```shell
 EXTERNAL_IP=$(kubectl -n$NAMESPACE get ingress -l "app.kubernetes.io/name=$APP_INSTANCE_NAME" \
@@ -272,11 +272,27 @@ echo http://$EXTERNAL_IP/dgrv4/login
 ![015](resources/015.png)
 
 8.Please wait another 15 to 20 minutes, then use a browser to connect to the DNS Hostnames of the TLS certificate.
+
+In Network Services-> Load balancing -> Edit classic Application Load Balancer, you can see "Create a new certificate", as shown in the figure below.
+
+![018](resources/018.png)
+
+After uploading the Certificate, you can see the DNS Hostnames.
+![019](resources/019.png)
+
+digiRunner URL example:
+
+``` textile
+https://{gcp.digirunner.click}/dgrv4/login
+```
+
 Login information is as follows.
+
 ``` textile
 Username：manager
 User password：manager123
 ```
+
 ![016](resources/016.png)
 
 9.After logging in, the system screen is as follows.
