@@ -45,15 +45,13 @@ function call_update_IP_api_with_token() {
     echo "$api_response1"
     echo "."
 
-    # 使用 token 調用 API...2....改為 Alpha License
     local api_response2=$(curl -s -k -X POST "$API_URL" \
         -H 'accept: application/json, text/plain, */*' \
         -H "authorization: Bearer $access_token" \
         -H 'content-type: application/json' \
-        --data '{"ReqHeader":{"txSN":"","txDate":"","txID":"","cID":"","locale":""},"ReqBody":{"id":"TSMP_EDITION","oldVal":"Cn88-nNO8-xx8u-un88-nVoF-Fr48-80rc-L5rF-xN#8-e1=x-6#xo-=d4#-2\u0021=n-\u0021#2\u0021-=\u0021\u0021\u0021-\u0021\u0021\u0021","newVal":"Cn88-nvvl-8FF8-EENU-88nG-G4LL-A\u0021o8-86\u0021u-xcoo-8nmV-xd4r-xN48-u\u0021Fq-9d6V-nkN8-44\u0021\u0021-\u0021\u0021\u0021\u0021-","memo":"TSMP license key-new","encrptionType":"NONE"}}')
+        --data '{"ReqHeader":{"txSN":"","txDate":"","txID":"","cID":"","locale":""},"ReqBody":{"id":"TSMP_EDITION","oldVal":"Cn88-nNO8-xx8u-un88-nVoF-Fr48-80rc-L5rF-xN#8-e1=x-6#xo-=d4#-2\u0021=n-\u0021#2\u0021-=\u0021\u0021\u0021-\u0021\u0021\u0021","newVal":"Cn88-nvvl-8FF8-EENU-88nG-G4LL-A\u0021o8-86\u0021u-xcoo-8nmV-xd4r-xN48-u\u0021Fq-9d6V-nkN8-44\u0021\u0021-\u0021\u0021\u0021\u0021-","memo":"","encrptionType":"NONE"}}')
 
     # 輸出 API 響應...2
-    echo "API Response...2...License value:"
     echo "$api_response2"
     echo "."
     
