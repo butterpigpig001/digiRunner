@@ -43,7 +43,7 @@ properties:
   app.persistentVolumeClaim.size:
     type: string
     title: Storage size for digiRunner.
-    default: "1Gi"
+    default: "100Mi"
     description: The storage size digiRunner persistent volume
     pattern: '^[1-9][0-9]*(\.[0-9]+)?[TGM]i?$'
 

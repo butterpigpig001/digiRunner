@@ -149,11 +149,11 @@ For the persistent disk provisioning of the digiRunner application , you will ne
    * ```kubectl get storageclass```
    * Or check how to create a new StorageClass in [Kubernetes Documentation](https://kubernetes.io/docs/concepts/storage/storage-classes/#the-storageclass-resource)
 
- * Set the persistent disk's size. The default disk size is "1Gi".
+ * Set the persistent disk's size. The default disk size is "100Mi".
 
 ```shell
 export DGR_STORAGE_CLASS="standard-rwo" # provide your StorageClass name if not "standard"
-export DGR_PERSISTENT_DISK_SIZE="1Gi"
+export DGR_PERSISTENT_DISK_SIZE="100Mi"
 ```
 
 Configure the container images:
