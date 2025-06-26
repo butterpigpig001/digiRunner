@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 设置变量
-API_URL="http://127.0.0.1:8080/dgrv4/version"  # 替换为您的 API URL
+API_URL="http://127.0.0.1:8442/dgrv4/version"  # 替换为您的 API URL
 MAX_RETRIES=30
 RETRY_INTERVAL=5
 
