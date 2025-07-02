@@ -4,7 +4,7 @@
 API_URL="http://127.0.0.1:8442/dgrv4/version"  # 替换为您的 API URL
 MAX_RETRIES=30
 RETRY_INTERVAL=5
-containerAppName=$0
+containerAppName=$1
 
 # 定义一个函数来检查 API
 check_version_api() {

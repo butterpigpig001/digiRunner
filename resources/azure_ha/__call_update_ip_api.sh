@@ -67,18 +67,6 @@ function call_update_IP_api_with_token() {
     echo "API Response...3...Composer IP:"
     echo "$api_response2"
     echo "."
-
-    # 使用 token 調用 API...5....改為 Composer IP
-    local api_response5=$(curl -s -k -X POST "$API_URL" \
-        -H 'accept: application/json, text/plain, */*' \
-        -H "authorization: Bearer $access_token" \
-        -H 'content-type: application/json' \
-        --data '{"ReqHeader":{"txSN":"","txDate":"","txID":"","cID":"","locale":""},"ReqBody":{"id":"DGRKEEPER_IP","oldVal":"127.0.0.1","newVal":"$containerAppName","memo":"COMPOSER IP","encrptionType":"NONE"}}')
-
-    # 輸出 API 響應...5
-    echo "API Response...5...Keeper IP:"
-    echo "$api_response5"
-    echo "."
     
     # 使用 token 調用 API...4....reset.func
     local api_response3=$(curl -s -k -X POST "$API_URL2" \
@@ -102,6 +90,18 @@ function call_update_IP_api_with_token() {
     # 輸出 API 響應...5
     echo "API Response...5...AUTO_INITSQL_FLAG=false"
     echo "$api_response2"
+    echo "."
+
+    # 使用 token 調用 API...6....改為 keeper IP
+    local api_response5=$(curl -s -k -X POST "$API_URL" \
+        -H 'accept: application/json, text/plain, */*' \
+        -H "authorization: Bearer $access_token" \
+        -H 'content-type: application/json' \
+        --data "{\"ReqHeader\":{\"txSN\":\"\",\"txDate\":\"\",\"txID\":\"\",\"cID\":\"\",\"locale\":\"\"},\"ReqBody\":{\"id\":\"DGRKEEPER_IP\",\"oldVal\":\"127.0.0.1\",\"newVal\":\"$containerAppName\",\"memo\":\"DGRKEEPER Server Host\",\"encrptionType\":\"NONE\"}}")
+
+    # 輸出 API 響應...6
+    echo "API Response...6...Keeper IP:"
+    echo "$api_response6"
     echo "."
 
     return 0
