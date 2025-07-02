@@ -4,6 +4,7 @@
 API_URL="http://127.0.0.1:8442/dgrv4/version"  # 替换为您的 API URL
 MAX_RETRIES=30
 RETRY_INTERVAL=5
+containerAppName=$0
 
 # 定义一个函数来检查 API
 check_version_api() {
@@ -41,7 +42,7 @@ if [ $? -eq 0 ]; then
     # 例如：
     # your_next_command
     # another_command
-    sh __call_update_ip_api.sh "http://localhost:8442/dgrv4/tptoken/oauth/token" "http://localhost:8442/dgrv4/17/DPB9903" "http://localhost:8442/dgrv4/11/DPB0062" ;
+    sh __call_update_ip_api.sh "http://localhost:8442/dgrv4/tptoken/oauth/token" "http://localhost:8442/dgrv4/17/DPB9903" "http://localhost:8442/dgrv4/11/DPB0062" "$containerAppName";
 else
     echo "API check failed. Exiting."
     exit 1

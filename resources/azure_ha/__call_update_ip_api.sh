@@ -4,6 +4,7 @@ function call_update_IP_api_with_token() {
     local TOKEN_URL="${1:-https://localhost:18081/dgrv4/tptoken/oauth/token}"
     local API_URL="${2:-https://localhost:18081/dgrv4/17/DPB9903}"
     local API_URL2="${3:-https://localhost:18081/dgrv4/11/DPB0062}"
+    local containerAppName="$4"
 
 # curl 'https://localhost:18080/dgrv4/tptoken/oauth/token' \
 #   -H 'accept: application/json, text/plain, */*' \
@@ -65,6 +66,18 @@ function call_update_IP_api_with_token() {
     # 輸出 API 響應...3
     echo "API Response...3...Composer IP:"
     echo "$api_response2"
+    echo "."
+
+    # 使用 token 調用 API...5....改為 Composer IP
+    local api_response5=$(curl -s -k -X POST "$API_URL" \
+        -H 'accept: application/json, text/plain, */*' \
+        -H "authorization: Bearer $access_token" \
+        -H 'content-type: application/json' \
+        --data '{"ReqHeader":{"txSN":"","txDate":"","txID":"","cID":"","locale":""},"ReqBody":{"id":"DGRKEEPER_IP","oldVal":"127.0.0.1","newVal":"$containerAppName","memo":"COMPOSER IP","encrptionType":"NONE"}}')
+
+    # 輸出 API 響應...5
+    echo "API Response...5...Keeper IP:"
+    echo "$api_response5"
     echo "."
     
     # 使用 token 調用 API...4....reset.func
