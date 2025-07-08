@@ -5,8 +5,6 @@ metadata:
   namespace: "{{ .Release.Namespace }}"
   labels:
     app.kubernetes.io/name: "{{ .Release.Name }}"
-  annotations:
-    marketplace.cloud.google.com/deploy-info: '{"partner_id": "0014M00001xkHxaQAE", "product_id": "digirunner", "partner_name": "TPIsoftware"}'  
 spec:
   descriptor:
     type: digiRunner
