@@ -12,15 +12,15 @@ x-google-marketplace:
   images:
     digirunner:
       properties:
-        app.image.dgr.repo:
+        environment.dgr.image.repo:
           type: REPO_WITH_REGISTRY
-        app.image.dgr.tag:
+        environment.dgr.image.tag:
           type: TAG
     composer:
       properties:
-        app.image.composer.repo:
+        environment.composer.image.repo:
           type: REPO_WITH_REGISTRY
-        app.image.composer.tag:
+        environment.composer.image.tag:
           type: TAG
 
 properties:
@@ -32,7 +32,7 @@ properties:
     type: string
     x-google-marketplace:
       type: NAMESPACE
-  app.persistentVolumeClaim.storageClass:
+  environment.persistentVolumeClaim.storageClass:
     type: string
     title: StorageClass
     description: You can choose an existing StorageClass or create a new one.
@@ -40,7 +40,7 @@ properties:
       type: STORAGE_CLASS
       storageClass:
         type: SSD
-  app.persistentVolumeClaim.size:
+  environment.persistentVolumeClaim.size:
     type: string
     title: Storage size for digiRunner.
     default: "100Mi"

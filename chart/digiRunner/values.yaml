@@ -1,20 +1,31 @@
-app:
+environment:
   replicaCount: 1
-  image:
-    dgr: 
+  dgr: 
+    container:
+      port: 8442
+    image: 
       repo: null
       tag: null
-    composer: 
+    service:
+      type: LoadBalancer
+      port: 80
+  composer: 
+    container:
+      port: 8440
+    image: 
       repo: null
       tag: null
+  database:
+    container: 
+      port: 9090
+    image: 
+      repo: azul/zulu-openjdk-alpine
+      tag: 21
+    service:  
+      type: LoadBalancer
+      port: 9090
   file:
-    sh: "https://raw.githubusercontent.com/butterpigpig001/digiRunner/refs/heads/main/resources/__call_update_ip_api.sh" 
-  service:
-    type: LoadBalancer # NodePort
-    port: 80
+    sh: "https://raw.githubusercontent.com/butterpigpig001/digiRunner/refs/heads/main/resources/gcp_standalone/__call_update_ip_api.sh" 
   persistentVolumeClaim:
     storageClass: null
     size: null
-  port:
-    dgr: 8442
-    composer: 8440

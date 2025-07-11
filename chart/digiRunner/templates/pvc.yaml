@@ -7,5 +7,5 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: {{ .Values.app.persistentVolumeClaim.size }}
-  storageClassName: {{ .Values.app.persistentVolumeClaim.storageClass }}
+      storage: {{ .Values.environment.persistentVolumeClaim.size }}
+  storageClassName: {{ .Values.environment.persistentVolumeClaim.storageClass }}

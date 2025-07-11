@@ -179,12 +179,12 @@ expanded manifest file for future updates to your app.
 ```shell
 helm template $APP_INSTANCE_NAME chart/digiRunner \
   --namespace $NAMESPACE \
-  --set "app.image.dgr.repo=$IMAGE_DGR_REPO" \
-  --set "app.image.dgr.tag=$IMAGE_TAG" \
-  --set "app.image.composer.repo=$IMAGE_COMPOSER_REPO" \
-  --set "app.image.composer.tag=$IMAGE_TAG" \
-  --set "app.persistentVolumeClaim.storageClass=$DGR_STORAGE_CLASS" \
-  --set "app.persistentVolumeClaim.size=$DGR_PERSISTENT_DISK_SIZE" \
+  --set "environment.dgr.image.repo=$IMAGE_DGR_REPO" \
+  --set "environment.dgr.image.tag=$IMAGE_TAG" \
+  --set "environment.composer.image.repo=$IMAGE_COMPOSER_REPO" \
+  --set "environment.composer.image.tag=$IMAGE_TAG" \
+  --set "environment.persistentVolumeClaim.storageClass=$DGR_STORAGE_CLASS" \
+  --set "environment.persistentVolumeClaim.size=$DGR_PERSISTENT_DISK_SIZE" \
   > ${APP_INSTANCE_NAME}_manifest.yaml
 ```
 

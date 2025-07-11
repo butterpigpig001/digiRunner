@@ -1,16 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}
+  name: {{ .Release.Name }}-dgr
 spec:
-  replicas: {{ .Values.app.replicaCount }}
+  replicas: {{ .Values.environment.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1          # 同時最多多啟動 1 個新 Pod（預設 25%）
+      maxUnavailable: 1    # 同時最多中斷 1 個舊 Pod（預設 25%）
   selector:
     matchLabels:
-      app: {{ .Release.Name }}-app
+      app: {{ .Release.Name }}-dgr
   template:
     metadata:
       labels:
-        app: {{ .Release.Name }}-app
+        app: {{ .Release.Name }}-dgr
     spec:
       initContainers:
         - name: init-environment
@@ -19,11 +24,12 @@ spec:
           args:
             - |
               echo "Hello world"
-              if [ ! -d /opt/dgr-v4/db ]
-              then
-                mkdir -p /opt/dgr-v4/db
-              fi
-              chown 1000:1000 /opt/dgr-v4/db
+              while ! nc -z {{ .Release.Name }}-database-service {{ .Values.environment.database.container.port }} ; do
+                echo "waiting for database service"
+                sleep 2
+              done
+              echo "database service is up"
+
           volumeMounts:
             - name: dgr-storage
               mountPath: /opt/dgr-v4/db
@@ -31,8 +37,8 @@ spec:
       containers:
         - name: {{ .Release.Name }}-dgr
           ports:
-          - containerPort: {{ .Values.app.port.dgr }}
-          image: {{ .Values.app.image.dgr.repo }}:{{ .Values.app.image.dgr.tag }}
+          - containerPort: {{ .Values.environment.dgr.container.port }}
+          image: {{ .Values.environment.dgr.image.repo }}:{{ .Values.environment.dgr.image.tag }}
           command: ["/bin/sh", "-c"]
           args:
             - |
@@ -61,12 +67,12 @@ spec:
                 -Dfile.encoding=UTF-8 \
                 -Dlogging.config=file:./config/logback.xml \
                 -Dspring.profiles.active=local \
-                -Dserver.port={{ .Values.app.port.dgr }} \
+                -Dserver.port={{ .Values.environment.dgr.container.port }} \
                 -Ddigi.instance.id=dgr \
                 -Dspring.sql.init.mode=$spring_sql_init_mode \
                 -Des.apilog.allow.write.elastic=false \
                 -Dserver.ssl.enabled=false \
-                -Dspring.datasource.url='jdbc:h2:/opt/dgr-v4/db/dgrdb;NON_KEYWORDS=VALUE;Mode=MySQL' \
+                -Dspring.datasource.url='jdbc:h2:tcp://{{ .Release.Name }}-database-service:{{ .Values.environment.database.container.port }}/dgrdb;IFEXISTS=FALSE;NON_KEYWORDS=VALUE;Mode=MySQL' \
                 org.springframework.boot.loader.launch.PropertiesLauncher
           resources:
             requests:
@@ -82,7 +88,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /liveness  
-              port: {{ .Values.app.port.dgr }}      
+              port: {{ .Values.environment.dgr.container.port }}
               scheme: HTTP
             initialDelaySeconds: 60
             periodSeconds: 60
@@ -91,7 +97,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /readiness 
-              port: {{ .Values.app.port.dgr }}      
+              port: {{ .Values.environment.dgr.container.port }}      
               scheme: HTTP
             initialDelaySeconds: 0
             periodSeconds: 60
@@ -105,27 +111,28 @@ spec:
                 - -c
                 - |
                   # 檢查 HTTP endpoint 是否正常
-                  if ! curl -sf http://127.0.0.1:{{ .Values.app.port.dgr }}/liveness; then
+                  if ! curl -sf http://127.0.0.1:{{ .Values.environment.dgr.container.port }}/liveness; then
                     echo "HTTP 檢查失敗"
                     exit 1
                   fi
 
-                  # 檢查 initEnv.txt 檔案是否存在，若存在才執行下載與執行
-                  if [ ! -f /opt/dgr-v4/db/initEnv.txt ]; then \
+                  chown 1000:1000 /opt/dgr-v4/db
+
+                  # 檢查 init.txt 檔案是否存在，若存在才執行下載與執行
+                  if [ ! -f /opt/dgr-v4/db/init.txt ]; then \
                     # 使用 curl 下載檔案，-k 跳過憑證檢查，-L 跟隨轉址，-o 指定輸出檔案
-                    # curl -k -L "{{ .Values.app.file.sh }}" -o sh.zip && \
+                    # curl -k -L "{{ .Values.environment.file.sh }}" -o sh.zip && \
                     # unzip sh.zip -d . && \
-                    curl -k -L "{{ .Values.app.file.sh }}" -o __call_update_ip_api.sh && \
+                    curl -k -L "{{ .Values.environment.file.sh }}" -o __call_update_ip_api.sh && \
                     chmod +x __call_update_ip_api.sh && \
-                    sh __call_update_ip_api.sh "http://localhost:{{ .Values.app.port.dgr }}/dgrv4/tptoken/oauth/token" "http://localhost:{{ .Values.app.port.dgr }}/dgrv4/17/DPB9903" "http://localhost:{{ .Values.app.port.dgr }}/dgrv4/11/DPB0062" && \
-                    echo "OK" > /opt/dgr-v4/db/initEnv.txt ;
+                    sh __call_update_ip_api.sh "http://localhost:{{ .Values.environment.dgr.container.port }}/dgrv4/tptoken/oauth/token" "http://localhost:{{ .Values.environment.dgr.container.port }}/dgrv4/17/DPB9903" "http://localhost:{{ .Values.environment.dgr.container.port }}/dgrv4/11/DPB0062" > /opt/dgr-v4/db/init.txt ;
                   fi
             initialDelaySeconds: 120
             periodSeconds: 60
             timeoutSeconds: 10
             failureThreshold: 10
         - name: {{ .Release.Name }}-composer
-          image: {{ .Values.app.image.composer.repo }}:{{ .Values.app.image.composer.tag }}
+          image: {{ .Values.environment.composer.image.repo }}:{{ .Values.environment.composer.image.tag }}
           args:
             - "--node-options=--max-old-space-size=800"  
           env:
@@ -136,7 +143,7 @@ spec:
             - name: DIGIRUNNER_HOST_MAIN
               value: 127.0.0.1
             - name: DIGIRUNNER_PORT_MAIN
-              value: "{{ .Values.app.port.dgr }}"
+              value: "{{ .Values.environment.dgr.container.port }}"
             - name: HTTPS_ENABLED_MAIN
               value: "false"
           resources:
@@ -149,7 +156,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /editor/version 
-              port: {{ .Values.app.port.composer }}      
+              port: {{ .Values.environment.composer.container.port }}
               scheme: HTTP
             initialDelaySeconds: 60
             periodSeconds: 60
@@ -158,7 +165,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /editor/version 
-              port: {{ .Values.app.port.composer }}      
+              port: {{ .Values.environment.composer.container.port }}
               scheme: HTTP
             initialDelaySeconds: 0
             periodSeconds: 60
@@ -168,7 +175,7 @@ spec:
           startupProbe:
             httpGet:
               path: /editor/version  
-              port: {{ .Values.app.port.composer }}      
+              port: {{ .Values.environment.composer.container.port }}
               scheme: HTTP
             initialDelaySeconds: 120
             periodSeconds: 60
