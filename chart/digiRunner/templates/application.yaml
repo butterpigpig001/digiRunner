@@ -5,8 +5,8 @@ metadata:
   namespace: "{{ .Release.Namespace }}"
   labels:
     app.kubernetes.io/name: "{{ .Release.Name }}"
-    marketplace.cloud.google.com/deploy-info: '{"partner_id": "0014M00001xkHxaQAE", "product_id": "digirunner", "partner_name": "TPIsoftware"}'
-    goog-partner-solution : "isol_plb32_0014m00001xkhxaqae_dgxgkbnjofxcgupghyf6cw77vba7qhvh"
+  annotations:
+    marketplace.cloud.google.com/deploy-info: '{"partner_id": "0014M00001xkHxaQAE", "product_id": "digirunner", "partner_name": "TPIsoftware"}'  
 spec:
   descriptor:
     type: digiRunner
